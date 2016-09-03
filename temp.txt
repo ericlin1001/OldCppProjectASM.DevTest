@@ -1,0 +1,4 @@
+argv[0]:temp.exe
+argv[1]:abc
+argv[2]:cc
+Hello world

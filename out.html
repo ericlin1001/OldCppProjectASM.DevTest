@@ -1,0 +1,67 @@
+<HTML><HEAD>
+<TITLE>cgic test</TITLE></HEAD>
+<BODY><H1>cgic test</H1>
+<!-- 2.0: multipart/form-data is required for file uploads. --><form method="POST" enctype="multipart/form-data" 	action="/cgi-bin/cgitest.exe">
+<p>
+Text Field containing Plaintext
+<p>
+<input type="text" name="name">Your Name
+<p>
+Multiple-Line Text Field
+<p>
+<textarea NAME="address" ROWS=4 COLS=40>
+Default contents go here. 
+</textarea>
+<p>
+Checkbox
+<p>
+<input type="checkbox" name="hungry" checked>Hungry
+<p>
+Text Field containing a Numeric Value
+<p>
+<input type="text" name="temperature" value="98.6">
+Blood Temperature (80.0-120.0)
+<p>
+Text Field containing an Integer Value
+<p>
+<input type="text" name="frogs" value="1">
+Frogs Eaten
+<p>
+Single-SELECT
+<br>
+<select name="colors">
+<option value="Red">Red
+<option value="Green">Green
+<option value="Blue">Blue
+</select>
+<br>
+Multiple-SELECT
+<br>
+<select name="flavors" multiple>
+<option value="pistachio">Pistachio
+<option value="walnut">Walnut
+<option value="creme">Creme
+</select>
+<p>Exclusive Radio Button Group: Age of Truck in Years
+<input type="radio" name="age" value="1">1
+<input type="radio" name="age" value="2">2
+<input type="radio" name="age" value="3" checked>3
+<input type="radio" name="age" value="4">4
+<p>Nonexclusive Checkbox Group: Voting for Zero through Four Candidates
+<input type="checkbox" name="vote" value="A">A
+<input type="checkbox" name="vote" value="B">B
+<input type="checkbox" name="vote" value="C">C
+<input type="checkbox" name="vote" value="D">D
+<p>File Upload:
+<input type="file" name="file" value=""> (Select A Local File)
+<p>
+<p>Set a Cookie<p>
+<input name="cname" value=""> Cookie Name
+<input name="cvalue" value=""> Cookie Value<p>
+<input type="submit" name="testcgic" value="Submit Request">
+<input type="reset" value="Reset Request">
+<p>Save the CGI Environment<p>
+Pressing this button will submit the form, then save the CGI environment so that it can be replayed later by calling cgiReadEnvironment (in a debugger, for instance).<p>
+<input type="submit" name="saveenvironment" value="Save Environment">
+</form>
+</BODY></HTML>

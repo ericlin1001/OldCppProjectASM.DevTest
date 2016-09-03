@@ -1,0 +1,996 @@
+
+showReg macro reg
+push ax
+mov ax,reg
+aam
+showChar al
+showChar ah
+pop ax
+endm
+
+mapkey macro reg
+;al
+push cx
+
+mov cl,al
+test cl,01h
+jz change2
+mov cl,al
+test cl,100b
+jnz change5
+jmp endchange
+
+change2:
+add al,2
+jmp endchange
+
+change5:
+sub al,3
+
+endchange:
+pop cx
+endm
+
+pushi macro imm
+;will change dx.
+mov dx,imm
+push dx
+endm
+
+showChar macro char
+push dx
+push ax
+mov dl,char
+mov ah,02h
+int 21h
+pop ax
+pop dx
+endm
+
+showMess macro messAddress
+push dx
+push ax
+lea dx,messAddress
+mov ah,09h
+int 21h
+pop ax
+pop dx
+endm
+
+CR macro
+push ax
+push dx
+mov ah,02h
+mov dl,09h
+int 21h
+mov dl,0ah
+int 21h
+pop ax
+pop dx
+endm
+_DATA	SEGMENT
+;_BSS	SEGMENT
+head@@3PAUNode@@A 	DD 	01H 	DUP (0)			; head
+pivot@@3PAUNode@@A	DD	01H 	DUP (0)			; pivot
+food@@3PAUNode@@A 	DD 	01H 	DUP (0)			; food
+
+isLose@@3DA		DB	01H 	DUP (0)			; isLose
+ALIGN	4
+isWin@@3DA		DB	01H 	DUP (0)			; isWin
+ALIGN	4
+len@@3EA		DB	01H 	DUP (0)			; len
+ALIGN	4
+
+heap@@3UHeap@@A 	DB 	0208H 	DUP (0)			; heap
+graph@@3PAY07EA 	DB	040H 	DUP (0)			; graph
+outputData@@3PAEA 	DB	08H 	DUP (0)			; outputData
+;_BSS	ENDS
+
+dirs@@3PAUDir@@A DB 00H				; dirs
+DB	00H
+DB	0ffH
+DB	00H
+DB	00H
+DB	01H
+DB	01H
+DB	00H
+DB	00H
+DB	0ffH
+
+idir@@3EA 	DB	03H	; idir
+winLen@@3EA 	DB	18	; winLen
+
+c@@3HA		DW	07H	; c
+an@@3HA		DW	07H	; c
+_DATA	ENDS
+;********************************end of data seg***************************
+mprint macro node
+mov ax, node
+push ax
+call printNode
+sub sp,2
+endm
+
+_TEXT	SEGMENT
+assume cs:_TEXT,ds:_DATA
+start:
+mov ax,_DATA
+mov ds,ax
+agn:
+
+pushi 8
+call myalloc@@YAPAXG@Z
+sub sp,2
+push ax  	;nextp
+pushi 2		;ty
+pushi 3		;tx
+call newNode@@YAPAUNode@@EEPAU1@@Z
+sub sp,6
+
+push ax
+call printNode
+sub sp,2
+
+call init@@YAXXZ
+
+call print@@YAXXZ
+redo:
+;for test 
+;end test
+mov ah,08h
+int 21h
+
+sub al,'0'
+mov ah,0
+
+mapkey al
+
+push ax
+call move@@YAXE@Z
+
+mov ax,word ptr food@@3PAUNode@@A
+push ax
+call printNode
+sub sp,2
+
+mov ah,08h
+int 21h
+CR
+call print@@YAXXZ
+sub sp,2
+CR
+
+call createOutputData@@YAXXZ
+
+mov al,byte ptr len@@3EA
+add al,'0'
+showChar al
+
+jmp redo
+
+call getRand@@YAHXZ
+and ax,0007h
+add al,'0'
+showChar al
+
+
+
+jmp agn
+jmp exit
+
+printNode proc near
+push bp
+mov bp,sp
+showChar ' '
+showChar 'x'
+showChar ':'
+mov bx,4[bp]
+mov al,[bx]
+add al,'0'
+showChar al
+
+showChar 'y'
+showChar ':'
+mov al,[bx+1]
+add al,'0'
+showChar al
+pop bp
+ret
+printNode endp
+printAl proc near
+
+ret
+printAl endp
+exit:
+mov ah,4ch
+int 21h
+_TEXT ends
+
+
+
+_TEXT	SEGMENT
+_ipg$2662 = -17						; size = 1
+_pg$2661 = -16						; size = 4
+_index$2660 = -9					; size = 1
+_dir$ = -8						; size = 2
+_p$ = -4						; size = 4
+_tdir$ = 4						; size = 1
+move@@YAXE@Z PROC					; move
+; Line 118
+push	bp
+mov	bp, sp
+sub	sp, 20					; 00000014H
+push	si
+; Line 119
+mov	al, BYTE PTR _tdir$[bp]
+test	al, al
+jle	SHORT $LN13@move
+mov	cl, BYTE PTR _tdir$[bp]
+cmp	cl, 5
+jl	SHORT $LN14@move
+$LN13@move:
+; Line 120
+mov	dl, BYTE PTR idir@@3EA			; idir
+mov	BYTE PTR _tdir$[bp], dl
+showChar 'n';keep that direction.
+$LN14@move:
+; Line 122
+mov	bl, BYTE PTR _tdir$[bp]
+mov	bh,0
+shl 	bx,1
+mov	cx, WORD PTR dirs@@3PAUDir@@A[bx]
+mov	WORD PTR _dir$[bp], cx
+
+push cx
+add cl,'0'
+showChar 'x'
+showChar cl
+add ch,'0'
+showChar 'y'
+showChar ch
+showChar ' '
+CR
+pop cx
+
+; Line 123
+mov	dx, WORD PTR head@@3PAUNode@@A	; head
+mov	WORD PTR _p$[bp], dx
+; Line 125
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	cl, BYTE PTR [bx]
+mov	dl, BYTE PTR _dir$[bp]
+mov	ch,0
+mov	dh,0
+add	cx, dx
+and	cx, 8007H			; 80000007H
+jns	SHORT $LN17@move
+dec	cx
+or	cx, -8					; fffffff8H
+inc	cx
+$LN17@move:
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	BYTE PTR [bx], cl
+; Line 126
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	dl, BYTE PTR [bx+1]
+mov	al, BYTE PTR _dir$[bp+1]
+mov	dh,0
+mov	ah,0
+add	dx, ax
+and	dx, 8007H			; 80000007H
+jns	SHORT $LN18@move
+dec	dx
+or	dx, -8					; fffffff8H
+inc	dx
+$LN18@move:
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	BYTE PTR [bx+1], dl
+; Line 128
+mov	bx, WORD PTR food@@3PAUNode@@A	; food
+mov	al, BYTE PTR [bx]
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	dl, BYTE PTR [bx]
+cmp	al, dl
+jne	$LN12@move_more
+mov	bx, WORD PTR food@@3PAUNode@@A	; food
+mov	cl, BYTE PTR [bx+1]
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	al, BYTE PTR [bx+1]
+cmp	cl, al
+jne	$LN12@move_more
+; Line 131
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	dx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	WORD PTR [bx+4], dx
+mov	ax, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	WORD PTR head@@3PAUNode@@A, ax	; head
+; Line 132
+mov	cl, BYTE PTR len@@3EA			; len
+add	cl, 1
+mov	BYTE PTR len@@3EA, cl			; len
+; Line 133
+mov	dl, BYTE PTR len@@3EA			; len
+mov	al, BYTE PTR winLen@@3EA		; winLen
+cmp	dl, al
+jl	SHORT $LN11@move
+call	win@@YAXXZ				; win
+$LN11@move:
+; Line 135
+
+
+jmp end$LN12@move_more
+$LN12@move_more:jmp $LN12@move
+end$LN12@move_more:
+
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	dx, WORD PTR [bx+4]
+push	dx
+pushi	0
+pushi	0
+call	newNode@@YAPAUNode@@EEPAU1@@Z		; newNode
+add	sp, 6					; 0000000cH
+mov	WORD PTR pivot@@3PAUNode@@A, ax	; pivot
+; Line 137
+call	getRand@@YAHXZ				; getRand
+
+mov	cl, BYTE PTR len@@3EA			; len
+mov	ch,0
+
+mov	dx, 64					; 00000040H
+sub	dx, cx
+
+showChar 'b'
+push ax
+and al,0111b
+add al,'0'
+showChar al
+div	dl	
+pop ax
+showChar 'a'
+CR
+
+mov	dl,ah
+
+mov	BYTE PTR _index$2660[bp], dl
+; Line 138
+add	dl, 1
+mov	BYTE PTR _index$2660[bp], dl
+
+; Line 139
+call	createGraph@@YAXXZ			; createGraph
+; Line 140
+mov	WORD PTR _pg$2661[bp], OFFSET graph@@3PAY07EA ; graph
+; Line 141
+mov	BYTE PTR _ipg$2662[bp], 0
+$LN10@move:
+; Line 142
+mov	al, BYTE PTR _index$2660[bp]
+test	al, al
+je	SHORT $LN9@move
+mov	cl, BYTE PTR _ipg$2662[bp]
+mov	ch,0
+mov 	si,cx
+mov	bx, WORD PTR _pg$2661[bp]
+mov	al, BYTE PTR [bx+si]
+mov	cl, BYTE PTR _ipg$2662[bp]
+add	cl, 1
+mov	BYTE PTR _ipg$2662[bp], cl
+test	al, al
+jne	SHORT $LN8@move
+mov	dl, BYTE PTR _index$2660[bp]
+sub	dl, 1
+mov	BYTE PTR _index$2660[bp], dl
+$LN8@move:
+jmp	SHORT $LN10@move
+$LN9@move:
+; Line 143
+mov	al, BYTE PTR _ipg$2662[bp]
+sub	al, 1
+mov	BYTE PTR _ipg$2662[bp], al
+; Line 145
+mov	al, BYTE PTR _ipg$2662[bp]
+mov	cl,3
+shr	al,cl
+mov	bx, WORD PTR food@@3PAUNode@@A	; food
+;a radom deal with this error.
+and 	al,0111b
+mov	BYTE PTR [bx], al
+; Line 146
+mov	dl, BYTE PTR _ipg$2662[bp]
+and 	dl,0111b
+mov	bx, WORD PTR food@@3PAUNode@@A	; food
+mov	BYTE PTR [bx+1], dl
+; Line 148
+jmp	$LN15@move
+; Line 149
+jmp	$LN15@move
+$LN12@move:
+; Line 150
+mov	cx, WORD PTR head@@3PAUNode@@A	; head
+mov	WORD PTR _p$[bp], cx
+$LN6@move:
+; Line 151
+mov	bx, WORD PTR _p$[bp]
+mov	ax, WORD PTR [bx+4]
+mov	WORD PTR _p$[bp], ax
+mov	cx, WORD PTR _p$[bp]
+cmp	cx, WORD PTR head@@3PAUNode@@A	; head
+je	SHORT $LN5@move
+mov	bx, WORD PTR _p$[bp]
+mov	al, BYTE PTR [bx]
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	dl, BYTE PTR [bx]
+cmp	al, dl
+jne	SHORT $LN4@move
+mov	bx, WORD PTR _p$[bp]
+mov	cl, BYTE PTR [bx+1]
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	al, BYTE PTR [bx+1]
+cmp	cl, al
+jne	SHORT $LN4@move
+jmp	SHORT $LN5@move
+$LN4@move:
+; Line 152
+jmp	SHORT $LN6@move
+$LN5@move:
+mov	bx, WORD PTR _p$[bp]
+mov	dx, WORD PTR [bx+4]
+cmp	dx, WORD PTR head@@3PAUNode@@A	; head
+jne	SHORT $LN3@move
+; Line 154
+mov	al, BYTE PTR idir@@3EA			; idir
+mov	BYTE PTR _tdir$[bp], al
+; Line 155
+mov	bl, BYTE PTR _tdir$[bp]
+mov	bh,0
+shl 	bx,1
+mov	dx, WORD PTR dirs@@3PAUDir@@A[bx]
+mov	WORD PTR _dir$[bp], dx
+; Line 156
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	cl, BYTE PTR [bx]
+mov	dl, BYTE PTR _dir$[bp]
+add	cl, dl
+mov	ch,0
+and	cx, 8007H			; 80000007H
+jns	SHORT $LN20@move
+dec	cx
+or	cx, -8					; fffffff8H
+inc	cx
+$LN20@move:
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	BYTE PTR [bx], cl
+; Line 157
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	dl, BYTE PTR [bx+1]
+mov	al, BYTE PTR _dir$[bp+1]
+add	dl, al
+mov	dh,0
+and	dx, 8007H			; 80000007H
+jns	SHORT $LN21@move
+dec	dx
+or	dx, -8					; fffffff8H
+inc	dx
+$LN21@move:
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	BYTE PTR [bx+1], dl
+jmp	SHORT $LN2@move
+$LN3@move:
+; Line 158
+mov	dx, WORD PTR _p$[bp]
+cmp	dx, WORD PTR head@@3PAUNode@@A	; head
+je	SHORT $LN2@move
+; Line 159
+call	lose@@YAXXZ				; lose
+; Line 160
+jmp	SHORT $LN15@move
+$LN2@move:
+; Line 162
+mov	al, BYTE PTR _tdir$[bp]
+mov	BYTE PTR idir@@3EA, al			; idir
+; Line 165
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	dx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	WORD PTR [bx+4], dx
+mov	ax, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	WORD PTR head@@3PAUNode@@A, ax	; head
+; Line 166
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	dx, WORD PTR [bx+4]
+mov	WORD PTR pivot@@3PAUNode@@A, dx	; pivot
+; Line 167
+mov	ax, WORD PTR head@@3PAUNode@@A	; head
+mov	bx, WORD PTR pivot@@3PAUNode@@A	; pivot
+mov	dx, WORD PTR [bx+4]
+mov	bx,ax
+mov	WORD PTR [bx+4], dx
+$LN15@move:
+; Line 171
+pop	si
+mov	sp, bp
+pop	bp
+ret	0
+move@@YAXE@Z ENDP					; move
+_TEXT	ENDS
+
+_TEXT	SEGMENT
+;input 2.
+_num$ = 4						; size = 2
+myalloc@@YAPAXG@Z PROC					; myalloc
+; Line 58
+push	bp
+mov	bp, sp
+; Line 59
+mov	ax, WORD PTR heap@@3UHeap@@A+200h	;next,2byte.
+add	ax, OFFSET heap@@3UHeap@@A		; heap,
+mov	WORD PTR heap@@3UHeap@@A+204h, ax	;lastp,2byte.
+; Line 60
+mov	cx, WORD PTR _num$[bp]
+mov	dx, WORD PTR heap@@3UHeap@@A+200h
+add	dx, cx
+mov	WORD PTR heap@@3UHeap@@A+200h, dx
+; Line 61
+mov	ax, WORD PTR heap@@3UHeap@@A+204h
+; Line 62
+pop	bp
+ret	0
+myalloc@@YAPAXG@Z ENDP					; myalloc
+_TEXT ends
+
+_TEXT	SEGMENT
+_node$ = -4	; size = 4
+_tx$ = 4	; size = 1,count for ip,and bp.
+_ty$ = 6	; size = 1
+_p$ = 8		; size = 4
+newNode@@YAPAUNode@@EEPAU1@@Z PROC ; newNode
+; Line 63
+push	bp
+mov	bp, sp
+; Line 64
+mov     ax,8
+push	ax
+call	myalloc@@YAPAXG@Z			; myalloc
+add	sp, 4
+mov	WORD PTR _node$[bp], ax
+; Line 65
+mov	bx, WORD PTR _node$[bp]
+mov	cl, BYTE PTR _tx$[bp]
+mov	BYTE PTR [bx], cl
+; Line 66
+mov	cl, BYTE PTR _ty$[bp]
+mov	BYTE PTR [bx+1], cl
+; Line 67
+mov	dx, WORD PTR _p$[bp]
+mov	WORD PTR [bx+4], dx
+; Line 68
+mov	ax, WORD PTR _node$[bp]
+; Line 69
+mov	sp, bp
+pop	bp
+ret	0
+newNode@@YAPAUNode@@EEPAU1@@Z ENDP			; newNode
+_TEXT	ENDS
+
+_TEXT	SEGMENT
+getRand@@YAHXZ PROC	; getRand
+;why has it been truly random.
+; Line 75
+push	bp
+mov	bp, sp
+; Line 76
+mov 	dx,0
+mov	ax, WORD PTR c@@3HA	; c
+mov	bx, WORD PTR an@@3HA	; an
+mul	bx
+add	ax, 1
+adc 	dx,0
+mov	cx, 65535	
+div	cx
+mov 	ax,dx
+mov	WORD PTR an@@3HA, dx	; an
+; Line 77
+mov	ax,dx	
+; Line 78
+pop	bp
+ret	0
+getRand@@YAHXZ ENDP		; getRand
+
+_TEXT	ENDS
+
+_TEXT	SEGMENT
+_t$ = -4		; size = 4
+_k$ = 4			; size = 4,2byte.
+setSeed@@YAXH@Z PROC	; setSeed
+;some error exists.
+; Line 79
+push	bp
+mov	bp, sp
+push	cx
+; Line 81
+mov	ax, WORD PTR _k$[bp]
+mov	WORD PTR _t$[bp], ax
+; Line 82
+cmp	WORD PTR _k$[bp], 6
+je	SHORT $LN4@setSeed
+mov	cx, WORD PTR _k$[bp]
+mov 	dx,cx
+add 	dx,dx
+inc 	dx
+mov	WORD PTR _k$[bp], dx
+$LN4@setSeed:
+; Line 83
+mov	ax, WORD PTR _k$[bp]
+and	ax, 8007H		; 8007H
+jns	SHORT $LN7@setSeed
+dec	ax
+or	ax, -8		; fff8H
+inc	ax
+$LN7@setSeed:
+mov	WORD PTR _k$[bp], ax
+; Line 84
+cmp	WORD PTR _k$[bp], 1
+jne	SHORT $LN3@setSeed
+mov	WORD PTR _k$[bp], 7
+$LN3@setSeed:
+; Line 85
+mov	cx, WORD PTR _k$[bp]
+mov	WORD PTR c@@3HA, cx	; c
+mov	WORD PTR an@@3HA, cx	; an
+$LN2@setSeed:
+; Line 86
+mov	ax, WORD PTR _t$[bp]
+mov	cx, WORD PTR _t$[bp]
+sub	cx, 1
+mov	WORD PTR _t$[bp], cx
+test	ax, ax
+je	SHORT $LN5@setSeed
+call	getRand@@YAHXZ		; getRand
+jmp	SHORT $LN2@setSeed
+$LN5@setSeed:
+; Line 87
+mov	sp, bp
+pop	bp
+ret	0
+setSeed@@YAXH@Z ENDP		; setSeed
+_TEXT	ends 
+
+_TEXT	SEGMENT
+init@@YAXXZ PROC	; init
+; Line 90
+push	bp
+mov	bp, sp
+; Line 91
+pushi	0
+pushi	1
+pushi	2
+call	newNode@@YAPAUNode@@EEPAU1@@Z	; newNode
+add	sp,6 				; 0000000cH
+mov	WORD PTR head@@3PAUNode@@A, ax	; head
+mov	bx,ax
+mov	WORD PTR [bx+4], ax
+; Line 92
+; Line 93
+push	ax
+pushi	1
+pushi	1
+call	newNode@@YAPAUNode@@EEPAU1@@Z		; newNode
+add	sp, 6					; 0000000cH
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	WORD PTR [bx+4], ax
+; Line 94
+push	ax
+pushi	1
+pushi	0
+call	newNode@@YAPAUNode@@EEPAU1@@Z		; newNode
+add	sp, 6					; 0000000cH
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	WORD PTR [bx+4], ax
+; Line 95
+;mov	BYTE PTR len@@3EA, 3			; len
+mov	BYTE PTR len@@3EA, 3			; len
+; Line 96
+pushi	0
+pushi	0
+pushi	0
+call	newNode@@YAPAUNode@@EEPAU1@@Z		; newNode
+add	sp, 6					; 0000000cH
+mov	WORD PTR food@@3PAUNode@@A, ax	; food
+; Line 98
+mov	bx, WORD PTR head@@3PAUNode@@A	; head
+mov	ax, WORD PTR [bx+4]
+push	ax
+pushi	0
+pushi	0
+call	newNode@@YAPAUNode@@EEPAU1@@Z		; newNode
+add	sp, 6					; 0000000cH
+mov	WORD PTR pivot@@3PAUNode@@A, ax	; pivot
+; Line 99
+mov	BYTE PTR isWin@@3DA, 0			; isWin
+mov	BYTE PTR isLose@@3DA,0		; isLose
+; Line 100
+pop	bp
+ret	0
+init@@YAXXZ ENDP					; init
+_TEXT	ENDS
+
+
+_TEXT	SEGMENT
+lose@@YAXXZ PROC					; lose
+; Line 102
+push	bp
+mov	bp, sp
+mov	al, BYTE PTR isWin@@3DA		; isWin
+test	al, al
+jne	SHORT $LN2@lose
+mov	BYTE PTR isLose@@3DA, 1		; isLose
+;is lose.
+$LN2@lose:
+pop	bp
+ret	0
+lose@@YAXXZ ENDP					; lose
+_TEXT	ENDS
+
+_TEXT	SEGMENT
+win@@YAXXZ PROC					; win
+; Line 103
+push	bp
+mov	bp, sp
+; Line 104
+mov	al, BYTE PTR isLose@@3DA		; isLose
+test	al, al
+jne	SHORT $LN2@win
+mov	BYTE PTR isWin@@3DA, 1			; isWin
+;is win.
+$LN2@win:
+; Line 105
+pop	bp
+ret	0
+win@@YAXXZ ENDP					; win
+_TEXT	ENDS
+
+
+_TEXT	SEGMENT
+_pg$ = -12						; size = 4
+_i$ = -5						; size = 1
+_p$ = -4						; size = 4
+createGraph@@YAXXZ PROC				; createGraph
+; Line 106
+push	bp
+mov	bp, sp
+sub	sp, 12					; 0000000cH
+; Line 108
+mov	WORD PTR _pg$[bp], OFFSET graph@@3PAY07EA ; graph
+; Line 109
+mov	BYTE PTR _i$[bp], 0
+jmp	SHORT $LN6@createGrap
+$LN5@createGrap:
+mov	al, BYTE PTR _i$[bp]
+add	al, 1
+mov	BYTE PTR _i$[bp], al
+$LN6@createGrap:
+mov	cl, BYTE PTR _i$[bp]
+cmp	cl, 64					; 00000040H
+jge	SHORT $LN4@createGrap
+mov	bx, WORD PTR _pg$[bp]
+mov	BYTE PTR [bx], 0
+mov	ax, WORD PTR _pg$[bp]
+add	ax, 1
+mov	WORD PTR _pg$[bp], ax
+jmp	SHORT $LN5@createGrap
+
+$LN4@createGrap:
+; Line 111
+mov	cx, WORD PTR head@@3PAUNode@@A	; head
+mov	WORD PTR _p$[bp], cx
+
+$LN3@createGrap:
+; Line 113
+mov	bx, WORD PTR _p$[bp]
+mov	al, BYTE PTR [bx]
+mov	ch, BYTE PTR [bx+1]
+mov	ah,0
+mov	bx,ax
+mov 	cl,3
+shl	bx,cl
+mov	cl,ch
+mov 	ch,0
+add	bx,cx
+mov	BYTE PTR graph@@3PAY07EA[bx], 1
+; Line 114
+mov	bx, WORD PTR _p$[bp]
+mov	cx, WORD PTR [bx+4]
+mov	WORD PTR _p$[bp], cx
+; Line 115
+mov	dx, WORD PTR _p$[bp]
+cmp	dx, WORD PTR head@@3PAUNode@@A	; head
+jne	SHORT $LN3@createGrap
+; Line 116
+;set food.
+mov	bx, WORD PTR food@@3PAUNode@@A	; food
+mov	al, BYTE PTR [bx]
+mov	dx, WORD PTR food@@3PAUNode@@A	; food
+mov	ch, BYTE PTR [bx+1]
+mov	ah,0
+mov 	bx,ax
+mov 	cl,3
+shl	bx,cl
+mov 	cl,ch
+mov	ch,0
+add	bx,cx
+mov	BYTE PTR graph@@3PAY07EA[bx], 2
+; Line 117
+mov	sp, bp
+pop	bp
+ret	0
+createGraph@@YAXXZ ENDP				; createGraph
+_TEXT ends
+
+
+
+_TEXT	SEGMENT
+_ch$ = 4						; size = 1
+printChar@@YAXD@Z PROC					; printChar
+; Line 172
+	push	bp
+	mov	bp, sp
+	
+	showChar _ch$[bp]
+; Line 174
+	pop	bp
+	ret	0
+printChar@@YAXD@Z ENDP					; printChar
+_TEXT	ENDS
+
+
+_TEXT	SEGMENT
+_j$ = -2						; size = 1
+_i$ = -1						; size = 1
+print@@YAXXZ PROC					; print
+; Line 175
+	push	bp
+	mov	bp, sp
+	push	cx
+; Line 177
+	call	createGraph@@YAXXZ			; createGraph
+; Line 178
+	mov	BYTE PTR _i$[bp], 0
+	jmp	SHORT $LN6@print
+$LN5@print:
+	mov	al, BYTE PTR _i$[bp]
+	add	al, 1
+	mov	BYTE PTR _i$[bp], al
+$LN6@print:
+	mov	cl, BYTE PTR _i$[bp]
+	cmp	cl, 8
+	jge	SHORT $LN7@print
+; Line 179
+	mov	BYTE PTR _j$[bp], 0
+	jmp	SHORT $LN3@print
+$LN2@print:
+	mov	dl, BYTE PTR _j$[bp]
+	add	dl, 1
+	mov	BYTE PTR _j$[bp], dl
+$LN3@print:
+	mov	al, BYTE PTR _j$[bp]
+	cmp	al, 8
+	jge	SHORT $LN1@print
+; Line 180
+	mov	al, BYTE PTR _j$[bp]
+	mov	ch, BYTE PTR _i$[bp]
+	mov	cl,3
+	mov	ah,0
+	mov 	bx,ax
+	shl 	bx,cl
+	mov	cl,ch
+	mov	ch,0
+	add	bx,7
+	sub	bx,cx
+	mov	cl, BYTE PTR graph@@3PAY07EA[bx]
+	add	cl, 48					; 00000030H
+	mov	ch,0
+	push	cx
+	call	printChar@@YAXD@Z			; printChar
+	add	sp, 2
+
+; Line 182
+	jmp	SHORT $LN2@print
+$LN1@print:
+; Line 184
+	CR
+; Line 186
+	jmp	SHORT $LN5@print
+$LN7@print:
+; Line 187
+	mov	sp, bp
+	pop	bp
+	ret	0
+print@@YAXXZ ENDP					; print
+_TEXT	ENDS
+
+_TEXT	SEGMENT
+_j$ = -2						; size = 1
+_i$ = -1						; size = 1
+createOutputData@@YAXXZ PROC				; createOutputData
+; Line 189
+push	bp
+mov	bp, sp
+push	cx
+push	si
+; Line 191
+call	createGraph@@YAXXZ			; createGraph
+; Line 192
+mov	BYTE PTR _i$[bp], 0
+jmp	SHORT $LN6@createOutp
+$LN5@createOutp:
+mov	al, BYTE PTR _i$[bp]
+add	al, 1
+mov	BYTE PTR _i$[bp], al
+$LN6@createOutp:
+mov	cl, BYTE PTR _i$[bp]
+cmp	cl, 8
+jge	SHORT $LN7@createOutp
+; Line 193
+mov	bl, BYTE PTR _i$[bp]
+mov	bh,0
+mov	BYTE PTR outputData@@3PAEA[bx], 0
+; Line 194
+mov	BYTE PTR _j$[bp], 0
+jmp	SHORT $LN3@createOutp
+$LN2@createOutp:
+mov	al, BYTE PTR _j$[bp]
+add	al, 1
+mov	BYTE PTR _j$[bp], al
+$LN3@createOutp:
+mov	cl, BYTE PTR _j$[bp]
+cmp	cl, 8
+jge	SHORT $LN1@createOutp
+; Line 195
+mov	bl, BYTE PTR _i$[bp]
+mov	bh,0
+mov	al, BYTE PTR outputData@@3PAEA[bx]
+shl	al, 1
+mov	bl, BYTE PTR _i$[bp]
+mov	bh,0
+mov	BYTE PTR outputData@@3PAEA[bx], al
+; Line 196
+mov	dl, BYTE PTR _i$[bp]
+mov	dh,0
+mov	al, BYTE PTR _i$[bp]
+mov	ch, BYTE PTR _j$[bp]
+;cal bx
+mov	ah,0
+mov	bx,ax
+mov	cl,3
+shl	bx,cl	
+mov	cl,ch
+mov	ch,0
+add	bx,7
+sub	bx,cx
+;end cal bx
+mov	al, BYTE PTR graph@@3PAY07EA[bx]
+;why can ,if al==0,then al=0;otherwise,al=1
+neg	al
+sbb	al, al
+neg	al
+
+mov	bx,dx
+mov	cl, BYTE PTR outputData@@3PAEA[bx]
+add	cl, al
+mov	bh,0
+mov	bl, BYTE PTR _i$[bp]
+mov	BYTE PTR outputData@@3PAEA[bx], cl
+; Line 197
+jmp	SHORT $LN2@createOutp
+$LN1@createOutp:
+; Line 200
+jmp	$LN5@createOutp
+$LN7@createOutp:
+; Line 203
+pop	si
+mov	sp, bp
+pop	bp
+ret	0
+createOutputData@@YAXXZ ENDP				; createOutputData
+_TEXT	ENDS
+
+end start

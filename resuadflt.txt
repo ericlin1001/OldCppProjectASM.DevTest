@@ -1,0 +1,4 @@
+argv[0]:aaatemp.exe
+argv[1]:aadf
+argv[2]:afd
+Hello world

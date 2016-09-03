@@ -1,0 +1,63 @@
+_BSS	SEGMENT
+head@@3PAUNode@@A 	DD 	01H 	DUP (?)			; head
+pivot@@3PAUNode@@A	DD	01H 	DUP (?)			; pivot
+food@@3PAUNode@@A 	DD 	01H 	DUP (?)			; food
+
+isLose@@3DA		DB	01H 	DUP (?)			; isLose
+ALIGN	4
+isWin@@3DA		DB	01H 	DUP (?)			; isWin
+ALIGN	4
+len@@3EA		DB	01H 	DUP (?)			; len
+ALIGN	4
+
+heap@@3UHeap@@A 	DB 	0208H 	DUP (?)			; heap
+graph@@3PAY07EA 	DB	040H 	DUP (?)			; graph
+outputData@@3PAEA 	DB	08H 	DUP (?)			; outputData
+_BSS	ENDS
+
+_DATA	SEGMENT
+dirs@@3PAUDir@@A DB 00H				; dirs
+DB	00H
+DB	0ffH
+DB	00H
+DB	00H
+DB	01H
+DB	01H
+DB	00H
+DB	00H
+DB	0ffH
+
+idir@@3EA 	DB	03H					; idir
+winLen@@3EA 	DB	012H					; winLen
+
+c@@3HA		DD	07H					; c
+_DATA	ENDS
+;********************************end of data seg***************************
+
+_TEXT	SEGMENT
+assume cs:_text ds:_data
+start:
+mov ax,_data
+mov ds,ax
+
+_num$ = 4						; size = 2
+myalloc@@YAPAXG@Z PROC					; myalloc
+; Line 58
+push	bp
+mov	bp, sp
+; Line 59
+movzx	ax, WORD PTR heap@@3UHeap@@A+512
+add	ax, OFFSET heap@@3UHeap@@A		; heap
+mov	DWORD PTR heap@@3UHeap@@A+516, ax
+; Line 60
+movzx	cx, WORD PTR _num$[bp]
+movzx	dx, WORD PTR heap@@3UHeap@@A+512
+add	dx, cx
+mov	WORD PTR heap@@3UHeap@@A+512, dx
+; Line 61
+mov	ax, DWORD PTR heap@@3UHeap@@A+516
+; Line 62
+pop	bp
+ret	0
+myalloc@@YAPAXG@Z ENDP					; myalloc
+_TEXT	ENDS

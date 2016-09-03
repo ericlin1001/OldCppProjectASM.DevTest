@@ -1,0 +1,33 @@
+# Project: httpRequest
+# Makefile created by Dev-C++ 4.9.9.2
+
+CPP  = g++.exe -D__DEBUG__
+CC   = gcc.exe -D__DEBUG__
+WINDRES = windres.exe
+RES  = httpRequest_private.res
+OBJ  = httpRequest.o $(RES)
+LINKOBJ  = httpRequest.o $(RES)
+LIBS =  -L"D:/Program Files/DEV-CPP/Lib" ws2_32.lib  -g3 
+INCS =  -I"D:/Program Files/DEV-CPP/include" 
+CXXINCS =  -I"D:/Program Files/DEV-CPP/lib/gcc/mingw32/3.4.2/include"  -I"D:/Program Files/DEV-CPP/include/c++/3.4.2/backward"  -I"D:/Program Files/DEV-CPP/include/c++/3.4.2/mingw32"  -I"D:/Program Files/DEV-CPP/include/c++/3.4.2"  -I"D:/Program Files/DEV-CPP/include" 
+BIN  = httpRequest.exe
+CXXFLAGS = $(CXXINCS)   -g3
+CFLAGS = $(INCS)   -g3
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before httpRequest.exe all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CPP) $(LINKOBJ) -o "httpRequest.exe" $(LIBS)
+
+httpRequest.o: httpRequest.cpp
+	$(CPP) -c httpRequest.cpp -o httpRequest.o $(CXXFLAGS)
+
+httpRequest_private.res: httpRequest_private.rc 
+	$(WINDRES) -i httpRequest_private.rc --input-format=rc -o httpRequest_private.res -O coff 

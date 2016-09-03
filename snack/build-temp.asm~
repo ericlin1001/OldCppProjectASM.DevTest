@@ -1,0 +1,21 @@
+DATA	SEGMENT
+DATA	ENDS
+
+data  segment
+data ends
+;********************************end of data seg***************************
+
+_TEXT	SEGMENT
+assume cs:_TEXT,ds:DATA	
+start:
+mov ax,DATA
+mov ds,ax
+
+jmp exit
+
+exit:
+mov ah,4ch
+int 21h
+_TEXT	ENDS
+
+end start
